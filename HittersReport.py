@@ -8,9 +8,19 @@ from tkinter import filedialog
 ##Data from the hitter
 
 
-csv_file = pd.read_csv(filedialog.askopenfilename())
+csv_file = filedialog.askopenfilename()
+csv_df = pd.read_csv(csv_file)
+names = ['Bazzana, Travis']
+def csv_to_swing_df():
+    global csv_df
+    player_df = csv_df
+    player_df = player_df.drop(player_df[player_df.Batter != names[0]].index)
+    #player_df.drop(player_df.columns[player_df.apply(lambda col: col)], axis=1)
+    player_df.columns.values.tolist(remove_list[])
+    print(remove_list)
 
-def damage_heat_map():
-    
+    return
 
 
+
+csv_to_swing_df()
