@@ -5,8 +5,11 @@ __pycache__/
 
 # C extensions
 *.so
+# Sheet Folder
 
-# Distribution / packaging
+Sheets/
+
+# Distributi on / packaging
 .Python
 build/
 develop-eggs/
