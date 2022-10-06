@@ -14,7 +14,7 @@ import os
 #csv_file = filedialog.askopenfilename()
 csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\Postgame Pitcher Reports\\21-22CSVs\\All202122.csv"
 csv_df = pd.read_csv(csv_file)
-names = ['Melton, Jacob']
+names = ['Forrester, Garrett']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -27,7 +27,7 @@ def csv_to_swing_df():
     #Drops all rows where player didn't swing
     player_df = player_df.drop(player_df[player_df.PitchCall == 'BallCalled'].index)
     player_df = player_df.drop(player_df[player_df.PitchCall == 'StrikeCalled'].index)
-    player_df = player_df.drop(player_df[player_df.PitchCall == 'BallInDirt'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'BallinDirt'].index)
     #Creating a list of collums to remove from DF and then removing collums we need from list
     remove_list = player_df.columns.values.tolist()
     remove_list.remove("Batter")
@@ -62,6 +62,29 @@ def swing2d_density_plot(player_df):
 
     return
 
+def find_table_metrics():
+    player_df = csv_file
+    data_for_table = []
+    player_df = player_df.drop(player_df[player_df.Batter != names[0]].index)
+    remove_list = player_df.columns.values.tolist()
+    remove_list.remove("Batter")
+    remove_list.remove("PlateLocHeight")
+    remove_list.remove("PlateLocSide")
+    remove_list.remove("PitchCall")
+    remove_list.remove("BatterSide")
+    remove_list.remove("KorBB")
+    remove_list.remove("PlayResult")
+    remove_list.remove("ExitSpeed")
+    #Removes all collums other than those with .remove above from data frame
+    player_df = player_df.drop(remove_list, axis=1)
+    avg_ev_df = player_df.drop(player_df[player_df.ExitSpeed < 60.0].index)
+    avg_ev = 
+
+    return
+
+def data_frame_for_damage_chart():
+
+    return
 def damage_chart():
     return
 
