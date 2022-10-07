@@ -12,9 +12,9 @@ import os
 
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
-csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\Postgame Pitcher Reports\\21-22CSVs\\All202122.csv"
+csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\oct6combined.csv"
 csv_df = pd.read_csv(csv_file)
-names = ['Forrester, Garrett']
+names = ['Bazzana, Travis']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -63,8 +63,9 @@ def swing2d_density_plot(player_df):
     return
 
 def find_table_metrics():
-    player_df = csv_file
-    data_for_table = []
+    global csv_df
+    player_df = csv_df
+    #Drops all rows where player isn't hitting
     player_df = player_df.drop(player_df[player_df.Batter != names[0]].index)
     remove_list = player_df.columns.values.tolist()
     remove_list.remove("Batter")
@@ -78,7 +79,14 @@ def find_table_metrics():
     #Removes all collums other than those with .remove above from data frame
     player_df = player_df.drop(remove_list, axis=1)
     avg_ev_df = player_df.drop(player_df[player_df.ExitSpeed < 60.0].index)
-    avg_ev = 
+    avg_ev = round(avg_ev_df["ExitSpeed"].mean(),1)
+    max_ev = round(avg_ev_df["ExitSpeed"].max(),1)
+
+    swings = (player_df["PitchCall"].value_counts("InPlay") + player_df["PitchCall"].value_counts("FoulBall") + player_df["PitchCall"].value_counts("StrikeSwinging"))
+    takes = (player_df["PitchCall"].value_counts("BallCalled") + player_df["PitchCall"].value_counts("StrikeCalled"))
+    swing_rate = round(100*(swings/(swings+takes)),1)
+
+
 
     return
 
@@ -89,3 +97,4 @@ def damage_chart():
     return
 
 swing2d_density_plot(csv_to_swing_df())
+#find_table_metrics()
