@@ -78,12 +78,13 @@ def find_table_metrics():
     remove_list.remove("PlayResult")
     remove_list.remove("ExitSpeed")
     remove_list.remove("TaggedHitType")
-    
+
     #Removes all collums other than those with .remove above from data frame
     player_df = player_df.drop(remove_list, axis=1)
     avg_ev_df = player_df.drop(player_df[player_df.ExitSpeed < 60.0].index)
     avg_ev = round(avg_ev_df["ExitSpeed"].mean(),1)
     max_ev = round(avg_ev_df["ExitSpeed"].max(),1)
+
     swings = (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "FoulBall").sum() + (player_df["PitchCall"] == "StrikeSwinging").sum()
     takes = (player_df["PitchCall"] == "BallCalled").sum() + (player_df["PitchCall"] == "StrikeCalled").sum()
     swing_rate = round(100*(swings/(swings+takes)),1)
@@ -100,6 +101,26 @@ def find_table_metrics():
     strikeouts = (player_df["KorBB"] == "Strikeout").sum()
     plate_apearences = (player_df["KorBB"] == "Walk").sum() + (player_df["KorBB"] == "Strikeout").sum() + (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
     k_rate = round(100*(strikeouts/plate_apearences),1)
+
+    #(BB+HBP)/K
+    bb_hpb = (player_df["KorBB"] == "Walk").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
+    bb_hbp_over_ks = round((bb_hpb/strikeouts),2)
+
+    #BABIP
+    bip = (player_df["PitchCall"] == "InPlay").sum()
+    hits = (player_df["PlayResult"] == "Single").sum() + (player_df["PlayResult"] == "Double").sum() + (player_df["PlayResult"] == "Triple").sum() + (player_df["PlayResult"] == "HomeRun").sum()
+    babip = round(hits/bip,3)
+
+    data_to_pass_to_presentation = []
+    data_to_pass_to_presentation.append(str(avg_ev))
+    data_to_pass_to_presentation.append(str(max_ev))
+    data_to_pass_to_presentation.append(str(swing_rate) + "%")
+    data_to_pass_to_presentation.append(str(chase_rate) + "%")
+    data_to_pass_to_presentation.append(str(k_rate) + "%")
+    data_to_pass_to_presentation.append(str(bb_hbp_over_ks))
+    data_to_pass_to_presentation.append(str(babip))
+
+    print(data_to_pass_to_presentation)
 
 
     return
