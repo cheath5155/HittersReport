@@ -77,25 +77,30 @@ def find_table_metrics():
     remove_list.remove("KorBB")
     remove_list.remove("PlayResult")
     remove_list.remove("ExitSpeed")
+    remove_list.remove("TaggedHitType")
+    
     #Removes all collums other than those with .remove above from data frame
     player_df = player_df.drop(remove_list, axis=1)
     avg_ev_df = player_df.drop(player_df[player_df.ExitSpeed < 60.0].index)
     avg_ev = round(avg_ev_df["ExitSpeed"].mean(),1)
     max_ev = round(avg_ev_df["ExitSpeed"].max(),1)
-    print(player_df)
     swings = (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "FoulBall").sum() + (player_df["PitchCall"] == "StrikeSwinging").sum()
     takes = (player_df["PitchCall"] == "BallCalled").sum() + (player_df["PitchCall"] == "StrikeCalled").sum()
     swing_rate = round(100*(swings/(swings+takes)),1)
+
+    #Chase Rate
     out_of_zone_df = player_df
-    out_of_zone_df = out_of_zone_df.drop(out_of_zone_df[out_of_zone_df.PlateLocHeight > 3.6733].index)
-    out_of_zone_df = out_of_zone_df.drop(out_of_zone_df[out_of_zone_df.PlateLocHeight < 1.5242].index)
-    out_of_zone_df = out_of_zone_df.drop(out_of_zone_df[out_of_zone_df.PlateLocSide > 0.8308].index)
-    out_of_zone_df = out_of_zone_df.drop(out_of_zone_df[out_of_zone_df.PlateLocSide < -0.8308].index)
+    indexzone  = out_of_zone_df[ (out_of_zone_df['PlateLocSide'] < 0.83083) & (out_of_zone_df['PlateLocSide'] > -0.83083) & (out_of_zone_df['PlateLocHeight'] < 3.67333) & (out_of_zone_df['PlateLocHeight'] > 1.52417)].index
+    out_of_zone_df = out_of_zone_df.drop(indexzone)
     chases = (out_of_zone_df["PitchCall"] == "InPlay").sum() + (out_of_zone_df["PitchCall"] == "FoulBall").sum() + (out_of_zone_df["PitchCall"] == "StrikeSwinging").sum()
     takes_out_of_zone =  (out_of_zone_df["PitchCall"] == "BallCalled").sum() + (out_of_zone_df["PitchCall"] == "StrikeCalled").sum()
     chase_rate = round(100*(chases/(chases+takes_out_of_zone)),1)
-    print(chase_rate)
-    print(swing_rate)
+
+    #K Rate
+    strikeouts = (player_df["KorBB"] == "Strikeout").sum()
+    plate_apearences = (player_df["KorBB"] == "Walk").sum() + (player_df["KorBB"] == "Strikeout").sum() + (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
+    k_rate = round(100*(strikeouts/plate_apearences),1)
+
 
     return
 
