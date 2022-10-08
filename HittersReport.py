@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 from tkinter import filedialog
 import seaborn as sns
 import os
+from pptx import Presentation
+from pptx.util import Pt
+from pptx.util import Inches
+from pptx.enum.text import PP_ALIGN
+from pptx.dml.color import RGBColor
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -129,6 +134,75 @@ def data_frame_for_damage_chart():
 def damage_chart():
     return
 
+def presentation (tabledata):
+    prs = Presentation("Template.pptx")
+    prs.slide_width = Inches(11)
+    prs.slide_height = Inches(8.5)
+    #slide = prs.slides.add_slide(prs.slide_layouts[5])
+    slide = prs.slides.get(257)
+
+    name = names[0].split()
+    print(name)
+    full_name = name[-1] + ' ' + name[0]
+    full_name = full_name[:-1]
+    title = slide.shapes.title
+    title.text = full_name
+    title.text_frame.paragraphs[0].font.size = Pt(32)
+    title.text_frame.paragraphs[0].font.name = 'Beaver Bold'
+    title.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    # ---add table to slide---
+    x, y, cx, cy = Inches(0.15), Inches(1), Inches(10.35), Inches(2.5)
+    shape = slide.shapes.add_table(2, 7, x, y, cx, cy)
+    table = shape.table
+
+    tbl =  shape._element.graphic.graphicData.tbl
+    style_id = '{073A0DAA-6AF3-43AB-8588-CEC1D06C72B9}'
+    tbl[0][-1].text = style_id
+
+    #creating labels for values in all tables
+    cell = table.cell(0, 0)
+    cell.text = 'AVG EV'
+    cell.text_frame.paragraphs[0].font.size = Pt(14)
+    cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    cell01 = table.cell(0,1)
+    cell01.text = 'MAX EV'
+    cell01.text_frame.paragraphs[0].font.size = Pt(14)
+    cell01.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    cell02 = table.cell(0,2)
+    cell02.text = "Swing %"
+    cell02.text_frame.paragraphs[0].font.size = Pt(14)
+    cell02.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER    
+
+    cell03 = table.cell(0,3)
+    cell03.text = "Chase %"
+    cell03.text_frame.paragraphs[0].font.size = Pt(14)
+    cell03.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
+
+    cell04 = table.cell(0,4)
+    cell04.text = "Strikeout %"
+    cell04.text_frame.paragraphs[0].font.size = Pt(14)
+    cell04.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
+
+    cell05 = table.cell(0,5)
+    cell05.text = "BB+HBP/K"
+    cell05.text_frame.paragraphs[0].font.size = Pt(14)
+    cell05.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
+
+    cell06 = table.cell(0,6)
+    cell06.text = "BABIP"
+    cell06.text_frame.paragraphs[0].font.size = Pt(14)
+    cell06.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    #nested for loop which puts vales from averages into table
+    for j in range(14):
+        cell = table.cell((1),j)
+        cell.text = tabledata[j]
+        cell.text_frame.paragraphs[0].font.size = Pt(14)
+        cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER 
+        prs.save(os.path.join("Sheets", names[0], '.pptx'))
 
 
 #swing2d_density_plot(csv_to_swing_df())
