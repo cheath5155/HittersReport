@@ -82,12 +82,12 @@ def find_table_metrics():
     #Removes all collums other than those with .remove above from data frame
     player_df = player_df.drop(remove_list, axis=1)
     avg_ev_df = player_df.drop(player_df[player_df.ExitSpeed < 60.0].index)
-    avg_ev = round(avg_ev_df["ExitSpeed"].mean(),1)
-    max_ev = round(avg_ev_df["ExitSpeed"].max(),1)
+    avg_ev = "%.1f" % round(avg_ev_df["ExitSpeed"].mean(),1)
+    max_ev = "%.1f" % round(avg_ev_df["ExitSpeed"].max(),1)
 
     swings = (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "FoulBall").sum() + (player_df["PitchCall"] == "StrikeSwinging").sum()
     takes = (player_df["PitchCall"] == "BallCalled").sum() + (player_df["PitchCall"] == "StrikeCalled").sum()
-    swing_rate = round(100*(swings/(swings+takes)),1)
+    swing_rate = "%.1f" % round(100*(swings/(swings+takes)),1)
 
     #Chase Rate
     out_of_zone_df = player_df
@@ -95,12 +95,12 @@ def find_table_metrics():
     out_of_zone_df = out_of_zone_df.drop(indexzone)
     chases = (out_of_zone_df["PitchCall"] == "InPlay").sum() + (out_of_zone_df["PitchCall"] == "FoulBall").sum() + (out_of_zone_df["PitchCall"] == "StrikeSwinging").sum()
     takes_out_of_zone =  (out_of_zone_df["PitchCall"] == "BallCalled").sum() + (out_of_zone_df["PitchCall"] == "StrikeCalled").sum()
-    chase_rate = round(100*(chases/(chases+takes_out_of_zone)),1)
+    chase_rate = "%.1f" % round(100*(chases/(chases+takes_out_of_zone)),1)
 
     #K Rate
     strikeouts = (player_df["KorBB"] == "Strikeout").sum()
     plate_apearences = (player_df["KorBB"] == "Walk").sum() + (player_df["KorBB"] == "Strikeout").sum() + (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
-    k_rate = round(100*(strikeouts/plate_apearences),1)
+    k_rate = "%.1f" % round(100*(strikeouts/plate_apearences),1)
 
     #(BB+HBP)/K
     bb_hpb = (player_df["KorBB"] == "Walk").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
@@ -121,8 +121,6 @@ def find_table_metrics():
     data_to_pass_to_presentation.append(str(babip))
 
     print(data_to_pass_to_presentation)
-
-
     return
 
 def data_frame_for_damage_chart():
@@ -130,6 +128,8 @@ def data_frame_for_damage_chart():
     return
 def damage_chart():
     return
+
+
 
 #swing2d_density_plot(csv_to_swing_df())
 find_table_metrics()
