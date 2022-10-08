@@ -104,12 +104,12 @@ def find_table_metrics():
 
     #(BB+HBP)/K
     bb_hpb = (player_df["KorBB"] == "Walk").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
-    bb_hbp_over_ks = round((bb_hpb/strikeouts),2)
+    bb_hbp_over_ks = "%.2f" % round((bb_hpb/strikeouts),2)
 
     #BABIP
     bip = (player_df["PitchCall"] == "InPlay").sum()
     hits = (player_df["PlayResult"] == "Single").sum() + (player_df["PlayResult"] == "Double").sum() + (player_df["PlayResult"] == "Triple").sum() + (player_df["PlayResult"] == "HomeRun").sum()
-    babip = round(hits/bip,3)
+    babip = "%.3f" % round(hits/bip,3)
 
     data_to_pass_to_presentation = []
     data_to_pass_to_presentation.append(str(avg_ev))
