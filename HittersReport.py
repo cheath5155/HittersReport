@@ -11,6 +11,7 @@ from pptx.util import Pt
 from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN
 from pptx.dml.color import RGBColor
+from pptx.enum.text import MSO_ANCHOR
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -126,7 +127,7 @@ def find_table_metrics():
     data_to_pass_to_presentation.append(str(babip))
 
     print(data_to_pass_to_presentation)
-    return
+    return data_to_pass_to_presentation
 
 def data_frame_for_damage_chart():
 
@@ -162,48 +163,59 @@ def presentation (tabledata):
 
     #creating labels for values in all tables
     cell = table.cell(0, 0)
+    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell.text = 'AVG EV'
-    cell.text_frame.paragraphs[0].font.size = Pt(14)
+    cell.text_frame.paragraphs[0].font.size = Pt(22)
     cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     cell01 = table.cell(0,1)
+    cell01.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell01.text = 'MAX EV'
-    cell01.text_frame.paragraphs[0].font.size = Pt(14)
+    cell01.text_frame.paragraphs[0].font.size = Pt(22)
     cell01.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     cell02 = table.cell(0,2)
+    cell02.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell02.text = "Swing %"
-    cell02.text_frame.paragraphs[0].font.size = Pt(14)
+    cell02.text_frame.paragraphs[0].font.size = Pt(22)
     cell02.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER    
 
     cell03 = table.cell(0,3)
+    cell03.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell03.text = "Chase %"
-    cell03.text_frame.paragraphs[0].font.size = Pt(14)
+    cell03.text_frame.paragraphs[0].font.size = Pt(22)
     cell03.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell04 = table.cell(0,4)
+    cell04.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell04.text = "Strikeout %"
-    cell04.text_frame.paragraphs[0].font.size = Pt(14)
+    cell04.text_frame.paragraphs[0].font.size = Pt(22)
     cell04.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell05 = table.cell(0,5)
+    cell05.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell05.text = "BB+HBP/K"
-    cell05.text_frame.paragraphs[0].font.size = Pt(14)
+    cell05.text_frame.paragraphs[0].font.size = Pt(22)
     cell05.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell06 = table.cell(0,6)
+    cell06.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell06.text = "BABIP"
-    cell06.text_frame.paragraphs[0].font.size = Pt(14)
+    cell06.text_frame.paragraphs[0].font.size = Pt(22)
     cell06.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    
+
 
     #nested for loop which puts vales from averages into table
-    for j in range(14):
+    for j in range(7):
+        cell.vertical_anchor = MSO_ANCHOR.MIDDLE
         cell = table.cell((1),j)
         cell.text = tabledata[j]
-        cell.text_frame.paragraphs[0].font.size = Pt(14)
+        cell.text_frame.paragraphs[0].font.size = Pt(30)
         cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER 
-        prs.save(os.path.join("Sheets", names[0], '.pptx'))
+        
+    prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
 
 #swing2d_density_plot(csv_to_swing_df())
-find_table_metrics()
+presentation(find_table_metrics())
