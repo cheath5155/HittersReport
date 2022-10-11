@@ -130,7 +130,9 @@ def find_table_metrics():
     return data_to_pass_to_presentation
 
 def data_frame_for_damage_chart():
-
+    global csv_df
+    damage_df = csv_df
+    
     return
 def damage_chart():
     return
@@ -208,11 +210,11 @@ def presentation (tabledata):
 
     #nested for loop which puts vales from averages into table
     for j in range(7):
-        cell.vertical_anchor = MSO_ANCHOR.MIDDLE
         cell = table.cell((1),j)
         cell.text = tabledata[j]
         cell.text_frame.paragraphs[0].font.size = Pt(30)
-        cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER 
+        cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        cell.vertical_anchor = MSO_ANCHOR.MIDDLE 
         
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
