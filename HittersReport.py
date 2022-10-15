@@ -132,8 +132,21 @@ def find_table_metrics():
 def data_frame_for_damage_chart():
     global csv_df
     damage_df = csv_df
+
+    remove_list = damage_df.columns.values.tolist()
+    remove_list.remove("Batter")
+    remove_list.remove("PlateLocHeight")
+    remove_list.remove("PlateLocSide")
+    remove_list.remove("BatterSide")
+    remove_list.remove("ExitSpeed")
+
+    #Removes all collums other than those with .remove above from data frame
+    damage_df = damage_df.drop(remove_list, axis=1)
+
+
     
     return
+
 def damage_chart():
     return
 
