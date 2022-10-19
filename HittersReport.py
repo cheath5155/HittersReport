@@ -14,6 +14,10 @@ from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN
 from pptx.dml.color import RGBColor
 from pptx.enum.text import MSO_ANCHOR
+from scipy.interpolate import interp2d
+from scipy.interpolate import RectBivariateSpline
+from mpl_toolkits.mplot3d import Axes3D
+from scipy import interpolate
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -145,15 +149,54 @@ def data_frame_for_damage_chart():
     #Removes all collums other than those with .remove above from data frame
     damage_df = damage_df.drop(remove_list, axis=1)
 
+    print(damage_df)
+    drop_index = []
+    for i in range(damage_df.shape[0]):
+        if math.isnan(damage_df.iat[i, 4]) == True:
+            drop_index.append(i)
+
+    damage_df = damage_df.drop(drop_index)
+
     damage_df = damage_df.drop(damage_df[damage_df.ExitSpeed < 60.0].index)
+
+    
+
     #Switches from Pitcher view to catcher view
     damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
     return damage_df
 
+def damage_chart1(damage_df):
+    x_values = damage_df['PlateLocSide'].tolist()
+    y_values = damage_df['PlateLocHeight'].tolist()
+    evs = damage_df['ExitSpeed'].tolist()
+
+    x_list = np.array(x_values)
+    y_list = np.array(y_values)
+    evs_plot = np.array(evs)
+
+
+
+
+    f = interpolate.RectBivariateSpline(x[0,:], y[:,0], z)
+
+    subplot(1,2,1)
+    im = imshow(x[0,:], y[:,0], z, 40)
+    colorbar(im)
+
+    xnew, ynew = meshgrid(linspace(-1, 1, 70), linspace(-1, 1, 70))
+    znew = f(xnew, ynew)
+    subplot(1,2,2)
+    im = imshow(xnew[0,:], ynew[:,0], znew, 40)
+    colorbar(im)
+    suptitle('2-D grid data interpolation example')
+
+
+    return
 def damage_chart(damage_df):
-    array = np.zeros((7, 6) , dtype=np.int64)
+    hist = np.zeros((7, 6) , dtype=np.int64)
     for i in range(7):
         for j in range(6):
+            array = []
             temp_df = damage_df
             top_limit = 4.02-0.42*i
             bottom_limit = 4.02-0.42*(i+1)
@@ -177,9 +220,14 @@ def damage_chart(damage_df):
             else:
                 avg_ev_for_zone = 60
 
-            array[i,j] = avg_ev_for_zone
+            array.append(avg_ev_for_zone)
+        histo = np.histogram(array,bins=6,range=(0, 6))
+        hist[i, :], bins = histo
+
+
+
     
-    print(array)
+    print(hist)
 
 
 
@@ -190,6 +238,10 @@ def damage_chart(damage_df):
 
 
     return
+
+def test_chart():
+
+
 
 def presentation (tabledata):
     prs = Presentation("Template.pptx")
@@ -275,4 +327,5 @@ def presentation (tabledata):
 
 #swing2d_density_plot(csv_to_swing_df())
 #presentation(find_table_metrics())
-damage_chart(data_frame_for_damage_chart())
+#damage_chart(data_frame_for_damage_chart())
+test_chart()
