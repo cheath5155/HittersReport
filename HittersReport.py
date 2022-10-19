@@ -1,4 +1,6 @@
 from cgi import print_directory
+import math
+from cmath import nan
 from unicodedata import name
 import pandas as pd
 import numpy as np
@@ -143,11 +145,50 @@ def data_frame_for_damage_chart():
     #Removes all collums other than those with .remove above from data frame
     damage_df = damage_df.drop(remove_list, axis=1)
 
+    damage_df = damage_df.drop(damage_df[damage_df.ExitSpeed < 60.0].index)
+    #Switches from Pitcher view to catcher view
+    damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
+    return damage_df
 
+def damage_chart(damage_df):
+    array = np.zeros((7, 6) , dtype=np.int64)
+    for i in range(7):
+        for j in range(6):
+            temp_df = damage_df
+            top_limit = 4.02-0.42*i
+            bottom_limit = 4.02-0.42*(i+1)
+            left_limit = -1.0625 + 0.35416667*j
+            right_limit = -1.0625 + 0.35416667*(j+1)
+
+            #drops data from df not in cell needed
+            too_left = temp_df[(temp_df['PlateLocSide'] < left_limit)].index
+            temp_df = temp_df.drop(too_left)
+            too_right = temp_df[(temp_df['PlateLocSide'] > right_limit)].index
+            temp_df = temp_df.drop(too_right)
+            too_high = temp_df[(temp_df['PlateLocHeight'] > top_limit)].index
+            temp_df = temp_df.drop(too_high)
+            too_low = temp_df[(temp_df['PlateLocHeight'] < bottom_limit)].index
+            temp_df = temp_df.drop(too_low)
+
+            avg_ev_for_zone = round(temp_df["ExitSpeed"].mean(),0)
+            
+            if math.isnan(avg_ev_for_zone) == False:
+                avg_ev_for_zone = int(avg_ev_for_zone)
+            else:
+                avg_ev_for_zone = 60
+
+            array[i,j] = avg_ev_for_zone
     
-    return
+    print(array)
 
-def damage_chart():
+
+
+
+
+
+
+
+
     return
 
 def presentation (tabledata):
@@ -233,4 +274,5 @@ def presentation (tabledata):
 
 
 #swing2d_density_plot(csv_to_swing_df())
-presentation(find_table_metrics())
+#presentation(find_table_metrics())
+damage_chart(data_frame_for_damage_chart())
