@@ -213,25 +213,35 @@ def damage_chart(damage_df):
             too_low = temp_df[(temp_df['PlateLocHeight'] < bottom_limit)].index
             temp_df = temp_df.drop(too_low)
 
-            avg_ev_for_zone = round(temp_df["ExitSpeed"].mean(),0)
+            avg_ev_for_zone = round(temp_df["ExitSpeed"].mean(),1)
             
-            if math.isnan(avg_ev_for_zone) == False:
-                avg_ev_for_zone = int(avg_ev_for_zone)
-            else:
-                avg_ev_for_zone = 60
+            #if math.isnan(avg_ev_for_zone) == True:
+                #avg_ev_for_zone = 60
+                
 
             row.append(avg_ev_for_zone)
         array.append(row)
     df = pd.DataFrame(array)
+
+    for a in range(6):
+        if math.isnan(df.iloc[0,a]):
+            if a > 0 and a < 6:
+                df.iloc[0,a] = (df.iloc[0,a-1]+df.iloc[0,a+1])
+
+
+
+
     #df_smooth = gaussian_filter(df, sigma=1)
     #sns.heatmap(df_smooth, cmap='Spectral_r')
+    print(df)
     plt.imshow(df, cmap = 'jet', interpolation='bilinear')
     plt.show()
 
 
 
     
-    print(df)
+
+    
     #print(df_smooth)
 
 
