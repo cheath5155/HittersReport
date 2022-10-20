@@ -16,7 +16,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import MSO_ANCHOR
 from scipy.interpolate import interp2d
 from scipy.interpolate import RectBivariateSpline
-from mpl_toolkits.mplot3d import Axes3D
+from scipy.ndimage.filters import gaussian_filter
 from scipy import interpolate
 
 ##Create a report that takes in hitter data from a CSV file with muliple
@@ -193,10 +193,10 @@ def damage_chart1(damage_df):
 
     return
 def damage_chart(damage_df):
-    hist = np.zeros((7, 6) , dtype=np.int64)
+    array = []
     for i in range(7):
+        row = []
         for j in range(6):
-            array = []
             temp_df = damage_df
             top_limit = 4.02-0.42*i
             bottom_limit = 4.02-0.42*(i+1)
@@ -220,14 +220,19 @@ def damage_chart(damage_df):
             else:
                 avg_ev_for_zone = 60
 
-            array.append(avg_ev_for_zone)
-        histo = np.histogram(array,bins=6,range=(0, 6))
-        hist[i, :], bins = histo
+            row.append(avg_ev_for_zone)
+        array.append(row)
+    df = pd.DataFrame(array)
+    #df_smooth = gaussian_filter(df, sigma=1)
+    #sns.heatmap(df_smooth, cmap='Spectral_r')
+    plt.imshow(df, cmap = 'jet', interpolation='bilinear')
+    plt.show()
 
 
 
     
-    print(hist)
+    print(df)
+    #print(df_smooth)
 
 
 
@@ -239,7 +244,6 @@ def damage_chart(damage_df):
 
     return
 
-def test_chart():
 
 
 
@@ -327,5 +331,4 @@ def presentation (tabledata):
 
 #swing2d_density_plot(csv_to_swing_df())
 #presentation(find_table_metrics())
-#damage_chart(data_frame_for_damage_chart())
-test_chart()
+damage_chart(data_frame_for_damage_chart())
