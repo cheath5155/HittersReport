@@ -18,6 +18,7 @@ from scipy.interpolate import interp2d
 from scipy.interpolate import RectBivariateSpline
 from scipy.ndimage.filters import gaussian_filter
 from scipy import interpolate
+import matplotlib.patches as patches
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -25,9 +26,9 @@ from scipy import interpolate
 
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
-csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\oct6combined.csv"
+csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\oct20csvs.csv"
 csv_df = pd.read_csv(csv_file)
-names = ['Bazzana, Travis']
+names = ['Guerra, Mason']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -66,6 +67,9 @@ def swing2d_density_plot(player_df):
     sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap="YlOrBr", shade=True, bw_adjust=.5, ax=ax, alpha = 0.7)
     #creates demenstions for graph plus displays image
     ax.imshow(img, extent=[-2.75,2.75,-0.6,5.3], aspect=1)
+    rect = patches.Rectangle((-0.708333, 3.5508333), 1.4166667, 2.14916666667, linewidth=1, edgecolor='black', facecolor='none')
+    ax.add_patch(rect)
+    plt.show()
     #creates path for plot to be saved in there isn't one
     newpath = os.path.join("Sheets", names[0])
     if not os.path.exists(newpath):
@@ -138,6 +142,7 @@ def find_table_metrics():
 def data_frame_for_damage_chart():
     global csv_df
     damage_df = csv_df
+    damage_df = damage_df.drop(damage_df[damage_df.Batter != names[0]].index)
 
     remove_list = damage_df.columns.values.tolist()
     remove_list.remove("Batter")
@@ -149,11 +154,11 @@ def data_frame_for_damage_chart():
     #Removes all collums other than those with .remove above from data frame
     damage_df = damage_df.drop(remove_list, axis=1)
 
-    print(damage_df)
+
     drop_index = []
-    for i in range(damage_df.shape[0]):
-        if math.isnan(damage_df.iat[i, 4]) == True:
-            drop_index.append(i)
+    for index, row in damage_df.iterrows():
+        if math.isnan(row['ExitSpeed']) == True:
+            drop_index.append(index)
 
     damage_df = damage_df.drop(drop_index)
 
@@ -165,43 +170,29 @@ def data_frame_for_damage_chart():
     damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
     return damage_df
 
-def damage_chart1(damage_df):
-    x_values = damage_df['PlateLocSide'].tolist()
-    y_values = damage_df['PlateLocHeight'].tolist()
-    evs = damage_df['ExitSpeed'].tolist()
+def damage_chart1():
 
-    x_list = np.array(x_values)
-    y_list = np.array(y_values)
-    evs_plot = np.array(evs)
-
-
-
-
-    f = interpolate.RectBivariateSpline(x[0,:], y[:,0], z)
-
-    subplot(1,2,1)
-    im = imshow(x[0,:], y[:,0], z, 40)
-    colorbar(im)
-
-    xnew, ynew = meshgrid(linspace(-1, 1, 70), linspace(-1, 1, 70))
-    znew = f(xnew, ynew)
-    subplot(1,2,2)
-    im = imshow(xnew[0,:], ynew[:,0], znew, 40)
-    colorbar(im)
-    suptitle('2-D grid data interpolation example')
+    #Let's create some random  data
+    array = np.random.random_integers(0,10,(10,10)).astype(float)
+    #values grater then 7 goes to np.nan
+    array[array>7] = np.nan
 
 
     return
 def damage_chart(damage_df):
+    evs = []
+    x = []
+    y = []
     array = []
-    for i in range(7):
+    print(damage_df)
+    for i in range(10):
         row = []
-        for j in range(6):
+        for j in range(8):
             temp_df = damage_df
-            top_limit = 4.02-0.42*i
-            bottom_limit = 4.02-0.42*(i+1)
-            left_limit = -1.0625 + 0.35416667*j
-            right_limit = -1.0625 + 0.35416667*(j+1)
+            top_limit = 4.267222-0.35819444*i
+            bottom_limit = 4.267222-0.35819444*(i+1)
+            left_limit = -1.4166667 + 0.35416667*j
+            right_limit = -1.416667 + 0.35416667*(j+1)
 
             #drops data from df not in cell needed
             too_left = temp_df[(temp_df['PlateLocSide'] < left_limit)].index
@@ -220,13 +211,34 @@ def damage_chart(damage_df):
                 
 
             row.append(avg_ev_for_zone)
+
         array.append(row)
     df = pd.DataFrame(array)
+    print(df)
+    df.to_numpy()
+    x = np.arange(0, df.shape[1])
+    y = np.arange(0, df.shape[0])
+    #mask invalid values
+    df = np.ma.masked_invalid(df)
+    xx, yy = np.meshgrid(x, y)
+    #get only the valid values
+    x1 = xx[~df.mask]
+    y1 = yy[~df.mask]
+    newarr = df[~df.mask]
 
-    for a in range(6):
-        if math.isnan(df.iloc[0,a]):
-            if a > 0 and a < 6:
-                df.iloc[0,a] = (df.iloc[0,a-1]+df.iloc[0,a+1])
+    GD1 = interpolate.griddata((x1, y1), newarr.ravel(),
+                            (xx, yy),
+                                method='linear', fill_value=60.0)
+
+    df = pd.DataFrame(GD1)
+    
+
+
+
+    #for a in range(6):
+    #    if math.isnan(df.iloc[0,a]):
+    #        if a > 0 and a < 6:
+    #            df.iloc[0,a] = (df.iloc[0,a-1]+df.iloc[0,a+1])
 
 
 
@@ -234,7 +246,15 @@ def damage_chart(damage_df):
     #df_smooth = gaussian_filter(df, sigma=1)
     #sns.heatmap(df_smooth, cmap='Spectral_r')
     print(df)
-    plt.imshow(df, cmap = 'jet', interpolation='bilinear')
+
+    fig, ax = plt.subplots()
+    rect = patches.Rectangle((1.5, 1.5), 4, 6, linewidth=1, edgecolor='black', facecolor='none')
+    ax.add_patch(rect)
+    fig = plt.imshow(df, cmap = 'jet',vmin=60,vmax=100,  interpolation='spline36')
+    cbar = plt.colorbar(fig)
+    fig.axes.get_xaxis().set_visible(False)
+    fig.axes.get_yaxis().set_visible(False)
+    plt.title("Exit Velo Heat Map")
     plt.show()
 
 
@@ -342,3 +362,4 @@ def presentation (tabledata):
 #swing2d_density_plot(csv_to_swing_df())
 #presentation(find_table_metrics())
 damage_chart(data_frame_for_damage_chart())
+#damage_chart1()
