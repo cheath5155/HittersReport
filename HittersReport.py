@@ -26,9 +26,11 @@ import matplotlib.patches as patches
 
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
-csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\oct20csvs.csv"
+csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs Just Live\\OCT22SCRIM.csv"
+damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
+csv_dc_df = pd.read_csv(damage_chart_csv)
 csv_df = pd.read_csv(csv_file)
-names = ['Turley, Gavin']
+names = ['Guerra, Mason']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -60,6 +62,7 @@ def csv_to_swing_df():
 
 def swing2d_density_plot(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
+    rhhs = ['Burke, Isaiah','Cedillo, Ruben']
     img = plt.imread("RHH.png")
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
@@ -147,8 +150,8 @@ def find_table_metrics():
     return data_to_pass_to_presentation
 
 def data_frame_for_damage_chart():
-    global csv_df
-    damage_df = csv_df
+    global csv_dc_df
+    damage_df = csv_dc_df
     damage_df = damage_df.drop(damage_df[damage_df.Batter != names[0]].index)
 
     remove_list = damage_df.columns.values.tolist()
@@ -177,15 +180,7 @@ def data_frame_for_damage_chart():
     damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
     return damage_df
 
-def damage_chart1():
 
-    #Let's create some random  data
-    array = np.random.random_integers(0,10,(10,10)).astype(float)
-    #values grater then 7 goes to np.nan
-    array[array>7] = np.nan
-
-
-    return
 def damage_chart(damage_df):
     evs = []
     x = []
@@ -261,8 +256,12 @@ def damage_chart(damage_df):
     cbar = plt.colorbar(fig)
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
-    plt.title("Exit Velo Heat Map")
-    plt.show()
+    #plt.title("Exit Velo Heat Map")
+    newpath = os.path.join("Sheets", names[0])
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+    #saves plot in folder
+    plt.savefig(os.path.join("Sheets", names[0], 'heatmap.png'))
 
 
 
@@ -366,7 +365,7 @@ def presentation (tabledata):
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
 
-#swing2d_density_plot(csv_to_swing_df())
+swing2d_density_plot(csv_to_swing_df())
 #presentation(find_table_metrics())
-damage_chart(data_frame_for_damage_chart())
+#damage_chart(data_frame_for_damage_chart())
 #damage_chart1()
