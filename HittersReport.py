@@ -28,7 +28,7 @@ import matplotlib.patches as patches
 #csv_file = filedialog.askopenfilename()
 csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\oct20csvs.csv"
 csv_df = pd.read_csv(csv_file)
-names = ['Guerra, Mason']
+names = ['Turley, Gavin']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -60,15 +60,22 @@ def csv_to_swing_df():
 
 def swing2d_density_plot(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
-    img = plt.imread("LHH.png")
+    img = plt.imread("RHH.png")
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
     #Creates density plot, camp is color scheme and alpha is transperacy
-    sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap="YlOrBr", shade=True, bw_adjust=.5, ax=ax, alpha = 0.7)
+    chart = sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap="rocket_r", shade=True, bw_adjust=.5, ax=ax, alpha = 0.7)
     #creates demenstions for graph plus displays image
-    ax.imshow(img, extent=[-2.75,2.75,-0.6,5.3], aspect=1)
-    rect = patches.Rectangle((-0.708333, 3.5508333), 1.4166667, 2.14916666667, linewidth=1, edgecolor='black', facecolor='none')
-    ax.add_patch(rect)
+    ax.imshow(img, extent=[-2.63,2.665,-0.35,5.30], aspect=1)
+
+    chart.set(xticklabels=[])  
+    chart.set(xlabel=None)
+    chart.tick_params(bottom=False)
+    chart.set(yticklabels=[])  
+    chart.set(ylabel=None)
+    chart.tick_params(left=False)   # remove the ticks
+    #rect = patches.Rectangle((-0.708333, 1.6466667), 1.4166667, 1.90416667, linewidth=1, edgecolor='black', facecolor='none')
+    #ax.add_patch(rect)
     plt.show()
     #creates path for plot to be saved in there isn't one
     newpath = os.path.join("Sheets", names[0])
