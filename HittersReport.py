@@ -60,6 +60,34 @@ def csv_to_swing_df():
 
     return player_df
 
+def csv_to_whiff_df():
+    global csv_df
+    player_df = csv_df
+
+    #Drops all rows where player isn't hitting
+    player_df = player_df.drop(player_df[player_df.Batter != names[0]].index)
+    #Drops all rows where player didn't swing
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'BallCalled'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'StrikeCalled'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'BallinDirt'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'FoulBall'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'InPlay'].index)
+    #Creating a list of collums to remove from DF and then removing collums we need from list
+    remove_list = player_df.columns.values.tolist()
+    remove_list.remove("Batter")
+    remove_list.remove("PlateLocHeight")
+    remove_list.remove("PlateLocSide")
+    remove_list.remove("PitchCall")
+    remove_list.remove("BatterSide")
+    #Removes all collums other than those with .remove above from data frame
+    player_df = player_df.drop(remove_list, axis=1)
+    #Switches plate loc side values to be in catcher view by multiplying by -1
+    player_df['PlateLocSide'] = (player_df['PlateLocSide'] * -1)
+    print(player_df)
+
+
+    return player_df
+
 def swing2d_density_plot(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
     rhhs = ['Burke, Isaiah','Cedillo, Ruben']
@@ -79,7 +107,6 @@ def swing2d_density_plot(player_df):
     chart.tick_params(left=False)   # remove the ticks
     #rect = patches.Rectangle((-0.708333, 1.6466667), 1.4166667, 1.90416667, linewidth=1, edgecolor='black', facecolor='none')
     #ax.add_patch(rect)
-    plt.show()
     #creates path for plot to be saved in there isn't one
     newpath = os.path.join("Sheets", names[0])
     if not os.path.exists(newpath):
@@ -365,7 +392,7 @@ def presentation (tabledata):
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
 
-swing2d_density_plot(csv_to_swing_df())
+swing2d_density_plot(csv_to_whiff_df())
 #presentation(find_table_metrics())
 #damage_chart(data_frame_for_damage_chart())
 #damage_chart1()
