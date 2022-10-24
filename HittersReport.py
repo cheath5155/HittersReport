@@ -95,7 +95,7 @@ def swing2d_density_plot(player_df):
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
     #Creates density plot, camp is color scheme and alpha is transperacy
-    chart = sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap="rocket_r", shade=True, bw_adjust=.5, ax=ax, alpha = 0.7)
+    chart = sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap='rocket_r', shade=True, bw_adjust=.55, ax=ax, alpha = 0.5)
     #creates demenstions for graph plus displays image
     ax.imshow(img, extent=[-2.63,2.665,-0.35,5.30], aspect=1)
 
@@ -207,6 +207,9 @@ def data_frame_for_damage_chart():
     damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
     return damage_df
 
+def damage_chart_overhead():
+    
+    return
 
 def damage_chart(damage_df):
     evs = []
@@ -279,7 +282,7 @@ def damage_chart(damage_df):
     fig, ax = plt.subplots()
     rect = patches.Rectangle((1.5, 1.5), 4, 6, linewidth=1, edgecolor='black', facecolor='none')
     ax.add_patch(rect)
-    fig = plt.imshow(df, cmap = 'jet',vmin=60,vmax=100,  interpolation='spline36')
+    fig = plt.imshow(df, cmap = 'jet',vmin=60,vmax=100,  interpolation='bicubic')
     cbar = plt.colorbar(fig)
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
@@ -392,7 +395,7 @@ def presentation (tabledata):
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
 
-swing2d_density_plot(csv_to_whiff_df())
+swing2d_density_plot(csv_to_swing_df())
 #presentation(find_table_metrics())
 #damage_chart(data_frame_for_damage_chart())
 #damage_chart1()
