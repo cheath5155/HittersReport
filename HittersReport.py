@@ -1,4 +1,5 @@
 from cgi import print_directory
+from email.mime import image
 import math
 from cmath import nan
 from unicodedata import name
@@ -19,6 +20,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.ndimage.filters import gaussian_filter
 from scipy import interpolate
 import matplotlib.patches as patches
+from PIL import Image
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -30,7 +32,7 @@ csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\C
 damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
 csv_dc_df = pd.read_csv(damage_chart_csv)
 csv_df = pd.read_csv(csv_file)
-names = ['Guerra, Mason']
+names = ['Test']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -44,6 +46,7 @@ def csv_to_swing_df():
     player_df = player_df.drop(player_df[player_df.PitchCall == 'BallCalled'].index)
     player_df = player_df.drop(player_df[player_df.PitchCall == 'StrikeCalled'].index)
     player_df = player_df.drop(player_df[player_df.PitchCall == 'BallinDirt'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'HitByPitch'].index)
     #Creating a list of collums to remove from DF and then removing collums we need from list
     remove_list = player_df.columns.values.tolist()
     remove_list.remove("Batter")
@@ -95,7 +98,7 @@ def swing2d_density_plot(player_df):
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
     #Creates density plot, camp is color scheme and alpha is transperacy
-    chart = sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap='rocket_r', shade=True, bw_adjust=.55, ax=ax, alpha = 0.5)
+    chart = sns.kdeplot(x=player_df.PlateLocSide, y=player_df.PlateLocHeight,cmap='rocket_r', shade=True, bw_adjust=.55, ax=ax, alpha = 0.65)
     #creates demenstions for graph plus displays image
     ax.imshow(img, extent=[-2.63,2.665,-0.35,5.30], aspect=1)
 
@@ -177,8 +180,8 @@ def find_table_metrics():
     return data_to_pass_to_presentation
 
 def data_frame_for_damage_chart():
-    global csv_dc_df
-    damage_df = csv_dc_df
+    global csv_df
+    damage_df = csv_df
     damage_df = damage_df.drop(damage_df[damage_df.Batter != names[0]].index)
 
     remove_list = damage_df.columns.values.tolist()
@@ -205,14 +208,144 @@ def data_frame_for_damage_chart():
 
     #Switches from Pitcher view to catcher view
     damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
+
     return damage_df
 
-def damage_chart_overhead():
+def data_frame_for_overhead_damage_chart():
+    global csv_df
+    damage_df = csv_df
+    damage_df = damage_df.drop(damage_df[damage_df.Batter != names[0]].index)
+
+    remove_list = damage_df.columns.values.tolist()
+    remove_list.remove("Batter")
+    #POS Z is essentally -platelocside(already in catchers view)
+    remove_list.remove("ContactPositionZ")
+    #POS X is distance from front of home plate where contact occured in line with pitcher
+    remove_list.remove("ContactPositionX")
+    remove_list.remove("BatterSide")
+    remove_list.remove("ExitSpeed")
+
+    #Removes all collums other than those with .remove above from data frame
+    damage_df = damage_df.drop(remove_list, axis=1)
+
+
+    drop_index = []
+    for index, row in damage_df.iterrows():
+        if math.isnan(row['ExitSpeed']) == True:
+            drop_index.append(index)
+
+    damage_df = damage_df.drop(drop_index)
+
+    damage_df = damage_df.drop(damage_df[damage_df.ExitSpeed < 60.0].index)
+
+    return damage_df
+
+def damage_chart_overhead(damage_df):
+    x = []
+    y = []
+    array = []
+    print(damage_df)
+    for i in range(17):
+        row = []
+        for j in range(8):
+            temp_df = damage_df
+            top_limit = 4.50-0.375*i
+            bottom_limit = 4.50-0.375*(i+1)
+            left_limit = -1.500 + 0.375*j
+            right_limit = -1.500 + 0.375*(j+1)
+            if top_limit == 0:
+                print(i)
+            #drops data from df not in cell needed
+            too_left = temp_df[(temp_df['ContactPositionZ'] < left_limit)].index
+            temp_df = temp_df.drop(too_left)
+            too_right = temp_df[(temp_df['ContactPositionZ'] > right_limit)].index
+            temp_df = temp_df.drop(too_right)
+            too_high = temp_df[(temp_df['ContactPositionX'] > top_limit)].index
+            temp_df = temp_df.drop(too_high)
+            too_low = temp_df[(temp_df['ContactPositionX'] < bottom_limit)].index
+            temp_df = temp_df.drop(too_low)
+
+            avg_ev_for_zone = round(temp_df["ExitSpeed"].mean(),1)
+            
+            #if math.isnan(avg_ev_for_zone) == True:
+                #avg_ev_for_zone = 60
+                
+
+            row.append(avg_ev_for_zone)
+
+        array.append(row)
+    df = pd.DataFrame(array)
+    #print(df)
+    df.to_numpy()
+    x = np.arange(0, df.shape[1])
+    y = np.arange(0, df.shape[0])
+    #mask invalid values
+    df = np.ma.masked_invalid(df)
+    xx, yy = np.meshgrid(x, y)
+    #get only the valid values
+    x1 = xx[~df.mask]
+    y1 = yy[~df.mask]
+    newarr = df[~df.mask]
+
+    GD1 = interpolate.griddata((x1, y1), newarr.ravel(),
+                            (xx, yy),
+                                method='linear', fill_value=60.0)
+
+    df = pd.DataFrame(GD1)
     
+
+
+
+    #for a in range(6):
+    #    if math.isnan(df.iloc[0,a]):
+    #        if a > 0 and a < 6:
+    #            df.iloc[0,a] = (df.iloc[0,a-1]+df.iloc[0,a+1])
+
+
+
+
+    #df_smooth = gaussian_filter(df, sigma=1)
+    #sns.heatmap(df_smooth, cmap='Spectral_r')
+    print(df)
+
+    fig, ax = plt.subplots()
+    fig = plt.imshow(df, cmap = 'jet',vmin=60,vmax=100, interpolation='bicubic')
+    plt.plot([1.61111, 5.611111], [11.5, 11.5], color='black', linestyle='-', linewidth=2)
+    plt.plot([1.61111, 1.61111], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
+    plt.plot([5.61111, 5.61111], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
+    plt.plot([5.61111, 3.61111], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
+    plt.plot([1.61111, 3.61111], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
+    cbar = plt.colorbar(fig)
+    #plt.title("Exit Velo Heat Map")
+    newpath = os.path.join("Sheets", names[0])
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+    #saves plot in folder
+    plt.savefig(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
+
+    im = Image.open(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
+    # Cropped image of above dimension
+    # (It will not change original image)
+    im.crop((304, 59, 476, 426)).save(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
+
+
+
+    
+
+    
+    #print(df_smooth)
+
+
+
+
+
+
+
+
+
     return
 
 def damage_chart(damage_df):
-    evs = []
     x = []
     y = []
     array = []
@@ -394,8 +527,60 @@ def presentation (tabledata):
         
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
+def pitch_strike_called_df():
+    global csv_df
+    player_df = csv_df
 
-swing2d_density_plot(csv_to_swing_df())
+    #Drops all rows where player isn't hitting
+    #Drops all rows where player didn't swing
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'BallCalled'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'StrikeSwinging'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'FoulBall'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'BallinDirt'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'HitByPitch'].index)
+    player_df = player_df.drop(player_df[player_df.PitchCall == 'InPlay'].index)
+    #Creating a list of collums to remove from DF and then removing collums we need from list
+    remove_list = player_df.columns.values.tolist()
+    remove_list.remove("Batter")
+    remove_list.remove("PlateLocHeight")
+    remove_list.remove("PlateLocSide")
+    remove_list.remove("PitchCall")
+    remove_list.remove("BatterSide")
+    #Removes all collums other than those with .remove above from data frame
+    player_df = player_df.drop(remove_list, axis=1)
+    #Switches plate loc side values to be in catcher view by multiplying by -1
+    player_df['PlateLocSide'] = (player_df['PlateLocSide'] * -1)
+    print(player_df.to_string())
+
+
+    return player_df
+
+
+def pitch_loc_chart(player_df):
+    #Pulls image for background will have to imput if statemnt to deptermine right vs left
+    rhhs = ['Burke, Isaiah','Cedillo, Ruben']
+    img = plt.imread("RHH.png")
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.set_style("white")
+    #Creates density plot, camp is color scheme and alpha is transperacy
+    chart = plt.scatter(x=player_df.PlateLocSide, y=player_df.PlateLocHeight)
+    #creates demenstions for graph plus displays image
+    ax.imshow(img, extent=[-2.63,2.665,-0.35,5.30], aspect=1)
+      # remove the ticks
+    #rect = patches.Rectangle((-0.708333, 1.6466667), 1.4166667, 1.90416667, linewidth=1, edgecolor='black', facecolor='none')
+    #ax.add_patch(rect)
+    #creates path for plot to be saved in there isn't one
+    newpath = os.path.join("Sheets", names[0])
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+    #saves plot in folder
+    plt.savefig(os.path.join("Sheets", names[0], 'swingchart.png'))
+
+    return
+
+#swing2d_density_plot(csv_to_swing_df())
 #presentation(find_table_metrics())
 #damage_chart(data_frame_for_damage_chart())
-#damage_chart1()
+#damage_chart_overhead(data_frame_for_overhead_damage_chart())
+pitch_loc_chart(pitch_strike_called_df())
+
