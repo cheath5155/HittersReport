@@ -1,3 +1,4 @@
+from ast import walk
 from cgi import print_directory
 from email.mime import image
 import math
@@ -28,11 +29,11 @@ from PIL import Image
 
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
-csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs Just Live\\OCT22SCRIM.csv"
+csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs Just Live\\OCT29.csv"
 damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
 csv_dc_df = pd.read_csv(damage_chart_csv)
 csv_df = pd.read_csv(csv_file)
-names = ['Test']
+names = ['Macias, Dallas']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -134,6 +135,7 @@ def find_table_metrics():
     remove_list.remove("PlayResult")
     remove_list.remove("ExitSpeed")
     remove_list.remove("TaggedHitType")
+    remove_list.remove("RunsScored")
 
     #Removes all collums other than those with .remove above from data frame
     player_df = player_df.drop(remove_list, axis=1)
@@ -159,13 +161,39 @@ def find_table_metrics():
     k_rate = "%.1f" % round(100*(strikeouts/plate_apearences),1)
 
     #(BB+HBP)/K
-    bb_hpb = (player_df["KorBB"] == "Walk").sum() + (player_df["PitchCall"] == "HitByPitch").sum()
-    bb_hbp_over_ks = "%.2f" % round((bb_hpb/strikeouts),2)
+    walks = (player_df["KorBB"] == "Walk").sum()
+    hbps = (player_df["PitchCall"] == "HitByPitch").sum()
+    bb_hbp_over_ks = "%.2f" % round(((walks + hbps)/strikeouts),2)
 
     #BABIP
-    bip = (player_df["PitchCall"] == "InPlay").sum()
+    bip = (player_df["PitchCall"] == "InPlay").sum() - (player_df["PlayResult"] == "HomeRun").sum()
+    hits_no_hrs = (player_df["PlayResult"] == "Single").sum() + (player_df["PlayResult"] == "Double").sum() + (player_df["PlayResult"] == "Triple").sum()
+    babip = "%.3f" % round(hits_no_hrs/bip,3)
+
+    #AVG
+    ABs = (player_df["PitchCall"] == "InPlay").sum() - (player_df["PlayResult"] == "Sacrifice").sum() + (player_df["KorBB"] == "Strikeout").sum()
     hits = (player_df["PlayResult"] == "Single").sum() + (player_df["PlayResult"] == "Double").sum() + (player_df["PlayResult"] == "Triple").sum() + (player_df["PlayResult"] == "HomeRun").sum()
-    babip = "%.3f" % round(hits/bip,3)
+    avg = "%.3f" % round(hits/ABs,3)
+
+    #RBIs
+    rbi = "%.0f" % round(player_df["RunsScored"].sum(),0)
+
+    #Doubles, Triples, Home Runs, Walks
+    doubles = (player_df["PlayResult"] == "Double").sum()
+    triples = (player_df["PlayResult"] == "Triple").sum()
+    homers = (player_df["PlayResult"] == "HomeRun").sum()
+    
+
+    #OBP
+    obp = "%.3f" % round((walks + hbps + hits)/plate_apearences,3)
+
+    #SLG
+    slg = "%.3f" % round((hits + doubles + triples*2 + homers*3)/ABs,3)
+
+    #OPS
+    ops = "%.3f" % (round((walks + hbps + hits)/plate_apearences,3) + round((hits + doubles + triples*2 + homers*3)/ABs,3))
+
+
 
     data_to_pass_to_presentation = []
     data_to_pass_to_presentation.append(str(avg_ev))
@@ -175,6 +203,21 @@ def find_table_metrics():
     data_to_pass_to_presentation.append(str(k_rate) + "%")
     data_to_pass_to_presentation.append(str(bb_hbp_over_ks))
     data_to_pass_to_presentation.append(str(babip))
+    data_to_pass_to_presentation.append(str(plate_apearences))
+    data_to_pass_to_presentation.append(str(ABs))
+    data_to_pass_to_presentation.append(str(hits))
+    data_to_pass_to_presentation.append(str(doubles))
+    data_to_pass_to_presentation.append(str(triples))
+    data_to_pass_to_presentation.append(str(homers))
+    data_to_pass_to_presentation.append(str(rbi))
+    data_to_pass_to_presentation.append(str(walks))
+    data_to_pass_to_presentation.append(str(hbps))
+    data_to_pass_to_presentation.append(str(strikeouts))
+    data_to_pass_to_presentation.append(str(avg))
+    data_to_pass_to_presentation.append(str(obp))
+    data_to_pass_to_presentation.append(str(slg))
+    data_to_pass_to_presentation.append(str(ops))
+
 
     print(data_to_pass_to_presentation)
     return data_to_pass_to_presentation
@@ -443,9 +486,6 @@ def damage_chart(damage_df):
 
     return
 
-
-
-
 def presentation (tabledata):
     prs = Presentation("Template.pptx")
     prs.slide_width = Inches(11)
@@ -464,7 +504,7 @@ def presentation (tabledata):
     title.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     # ---add table to slide---
-    x, y, cx, cy = Inches(0.15), Inches(1), Inches(10.35), Inches(2.5)
+    x, y, cx, cy = Inches(0.15), Inches(0.85), Inches(10.7), Inches(1.5)
     shape = slide.shapes.add_table(2, 7, x, y, cx, cy)
     table = shape.table
 
@@ -476,42 +516,49 @@ def presentation (tabledata):
     cell = table.cell(0, 0)
     cell.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell.text = 'AVG EV'
+    cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell.text_frame.paragraphs[0].font.size = Pt(22)
     cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     cell01 = table.cell(0,1)
     cell01.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell01.text = 'MAX EV'
+    cell01.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell01.text_frame.paragraphs[0].font.size = Pt(22)
     cell01.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     cell02 = table.cell(0,2)
     cell02.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell02.text = "Swing %"
+    cell02.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell02.text_frame.paragraphs[0].font.size = Pt(22)
     cell02.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER    
 
     cell03 = table.cell(0,3)
     cell03.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell03.text = "Chase %"
+    cell03.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell03.text_frame.paragraphs[0].font.size = Pt(22)
     cell03.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell04 = table.cell(0,4)
     cell04.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell04.text = "Strikeout %"
+    cell04.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell04.text_frame.paragraphs[0].font.size = Pt(22)
     cell04.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell05 = table.cell(0,5)
     cell05.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell05.text = "BB+HBP/K"
+    cell05.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell05.text_frame.paragraphs[0].font.size = Pt(22)
     cell05.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell06 = table.cell(0,6)
     cell06.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell06.text = "BABIP"
+    cell06.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell06.text_frame.paragraphs[0].font.size = Pt(22)
     cell06.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
     
@@ -521,10 +568,41 @@ def presentation (tabledata):
     for j in range(7):
         cell = table.cell((1),j)
         cell.text = tabledata[j]
+        cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
         cell.text_frame.paragraphs[0].font.size = Pt(30)
         cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
         cell.vertical_anchor = MSO_ANCHOR.MIDDLE 
         
+    prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
+
+    x, y, cx, cy = Inches(0.15), Inches(2.5), Inches(10.7), Inches(1)
+    shape2 = slide.shapes.add_table(2, 14, x, y, cx, cy)
+    table2 = shape2.table
+
+    tbl =  shape2._element.graphic.graphicData.tbl
+    style_id = '{073A0DAA-6AF3-43AB-8588-CEC1D06C72B9}'
+    tbl[0][-1].text = style_id
+    text = ['PA', 'AB', 'H', '2B', '3B', 'HR', 'RBI', 'BB', 'HBP', 'K', 'AVG', 'OBP','SLG', 'OPS']
+    #creating labels for values in all tables
+    for i in range(14):
+        cell = table2.cell(0, i)
+        cell.text = text[i]
+        cell.text_frame.paragraphs[0].font.size = Pt(22)
+        cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
+        cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+    
+    for j in range(14):
+        cell = table2.cell((1),j)
+        cell.text = tabledata[j+7]
+        cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
+        if j > 9:
+            cell.text_frame.paragraphs[0].font.size = Pt(18)
+        else:
+            cell.text_frame.paragraphs[0].font.size = Pt(22)
+        cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        cell.vertical_anchor = MSO_ANCHOR.MIDDLE 
+    
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
 def pitch_strike_called_df():
@@ -563,7 +641,7 @@ def pitch_loc_chart(player_df):
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
     #Creates density plot, camp is color scheme and alpha is transperacy
-    chart = plt.scatter(x=player_df.PlateLocSide, y=player_df.PlateLocHeight)
+    chart = plt.scatter(x=player_df.PlateLocSide, y=player_df.PlateLocHeight, )
     #creates demenstions for graph plus displays image
     ax.imshow(img, extent=[-2.63,2.665,-0.35,5.30], aspect=1)
       # remove the ticks
@@ -574,7 +652,8 @@ def pitch_loc_chart(player_df):
     if not os.path.exists(newpath):
         os.makedirs(newpath)
     #saves plot in folder
-    plt.savefig(os.path.join("Sheets", names[0], 'swingchart.png'))
+    #plt.savefig(os.path.join("Sheets", names[0], 'swingchart.png'))
+    plt.show()
 
     return
 
@@ -582,5 +661,5 @@ def pitch_loc_chart(player_df):
 #presentation(find_table_metrics())
 #damage_chart(data_frame_for_damage_chart())
 #damage_chart_overhead(data_frame_for_overhead_damage_chart())
-pitch_loc_chart(pitch_strike_called_df())
+#pitch_loc_chart(pitch_strike_called_df())
 
