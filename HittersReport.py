@@ -22,6 +22,7 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy import interpolate
 import matplotlib.patches as patches
 from PIL import Image
+from pptx.dml.color import RGBColor
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -29,11 +30,11 @@ from PIL import Image
 
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
-csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs Just Live\\OCT29.csv"
-damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
-csv_dc_df = pd.read_csv(damage_chart_csv)
+csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\NOV2.csv"
+#damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
+#csv_dc_df = pd.read_csv(damage_chart_csv)
 csv_df = pd.read_csv(csv_file)
-names = ['Macias, Dallas']
+names = ['Dernedde, Kyle']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -116,7 +117,9 @@ def swing2d_density_plot(player_df):
     if not os.path.exists(newpath):
         os.makedirs(newpath)
     #saves plot in folder
-    plt.savefig(os.path.join("Sheets", names[0], 'swingchart.png'))
+    plt.axis('off')
+    plt.savefig(os.path.join("Sheets", names[0], 'swingchart.png'),bbox_inches='tight', pad_inches = 0)
+
 
     return
 
@@ -176,7 +179,16 @@ def find_table_metrics():
     avg = "%.3f" % round(hits/ABs,3)
 
     #RBIs
-    rbi = "%.0f" % round(player_df["RunsScored"].sum(),0)
+    #rbidf = rbidf.drop(rbidf[(rbidf.PitchCall != 'InPlay') | (rbidf.KorBB != 'Walk') | (rbidf.PitchCall != 'HitByPitch')].index)
+    inplay_df = player_df.drop(player_df[player_df.PitchCall != 'InPlay'].index)
+    walk_df = player_df.drop(player_df[player_df.KorBB != 'Walk'].index)
+    hbp_df = player_df.drop(player_df[player_df.PitchCall != 'HitByPitch'].index)
+    rbidf = pd.concat([inplay_df,walk_df,hbp_df])
+
+    print('RBI DF')
+    print(rbidf)
+    
+    rbi = "%.0f" % round(rbidf["RunsScored"].sum(),0)
 
     #Doubles, Triples, Home Runs, Walks
     doubles = (player_df["PlayResult"] == "Double").sum()
@@ -193,7 +205,11 @@ def find_table_metrics():
     #OPS
     ops = "%.3f" % (round((walks + hbps + hits)/plate_apearences,3) + round((hits + doubles + triples*2 + homers*3)/ABs,3))
 
-
+    #WOBA
+    woba = (0.689*walks + 0.720*hbps + 0.844*(hits-doubles-triples-homers) + 1.261*doubles + 1.601*triples + 2.072*homers)/plate_apearences
+    league_woba = 0.351
+    wRC = (((woba-league_woba)/1.259)+(.114)*plate_apearences)
+    wRC = "%.0f" % round(wRC)
 
     data_to_pass_to_presentation = []
     data_to_pass_to_presentation.append(str(avg_ev))
@@ -202,7 +218,8 @@ def find_table_metrics():
     data_to_pass_to_presentation.append(str(chase_rate) + "%")
     data_to_pass_to_presentation.append(str(k_rate) + "%")
     data_to_pass_to_presentation.append(str(bb_hbp_over_ks))
-    data_to_pass_to_presentation.append(str(babip))
+    data_to_pass_to_presentation.append(str(babip).lstrip('0'))
+    data_to_pass_to_presentation.append(str(wRC))
     data_to_pass_to_presentation.append(str(plate_apearences))
     data_to_pass_to_presentation.append(str(ABs))
     data_to_pass_to_presentation.append(str(hits))
@@ -213,10 +230,10 @@ def find_table_metrics():
     data_to_pass_to_presentation.append(str(walks))
     data_to_pass_to_presentation.append(str(hbps))
     data_to_pass_to_presentation.append(str(strikeouts))
-    data_to_pass_to_presentation.append(str(avg))
-    data_to_pass_to_presentation.append(str(obp))
-    data_to_pass_to_presentation.append(str(slg))
-    data_to_pass_to_presentation.append(str(ops))
+    data_to_pass_to_presentation.append(str(avg).lstrip('0'))
+    data_to_pass_to_presentation.append(str(obp).lstrip('0'))
+    data_to_pass_to_presentation.append(str(slg).lstrip('0'))
+    data_to_pass_to_presentation.append(str(ops).lstrip('0'))
 
 
     print(data_to_pass_to_presentation)
@@ -276,6 +293,11 @@ def data_frame_for_overhead_damage_chart():
     for index, row in damage_df.iterrows():
         if math.isnan(row['ExitSpeed']) == True:
             drop_index.append(index)
+        if math.isnan(row['ContactPositionX']) == True:
+            drop_index.append(index)
+        if math.isnan(row['ContactPositionZ']) == True:
+            drop_index.append(index)
+
 
     damage_df = damage_df.drop(drop_index)
 
@@ -284,6 +306,7 @@ def data_frame_for_overhead_damage_chart():
     return damage_df
 
 def damage_chart_overhead(damage_df):
+    print(damage_df)
     x = []
     y = []
     array = []
@@ -318,7 +341,7 @@ def damage_chart_overhead(damage_df):
 
         array.append(row)
     df = pd.DataFrame(array)
-    #print(df)
+    print(df)
     df.to_numpy()
     x = np.arange(0, df.shape[1])
     y = np.arange(0, df.shape[0])
@@ -330,9 +353,7 @@ def damage_chart_overhead(damage_df):
     y1 = yy[~df.mask]
     newarr = df[~df.mask]
 
-    GD1 = interpolate.griddata((x1, y1), newarr.ravel(),
-                            (xx, yy),
-                                method='linear', fill_value=60.0)
+    GD1 = interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='linear', fill_value=60.0)
 
     df = pd.DataFrame(GD1)
     
@@ -358,18 +379,18 @@ def damage_chart_overhead(damage_df):
     plt.plot([5.61111, 5.61111], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
     plt.plot([5.61111, 3.61111], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
     plt.plot([1.61111, 3.61111], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
-    cbar = plt.colorbar(fig)
+    #cbar = plt.colorbar(fig)
     #plt.title("Exit Velo Heat Map")
+    plt.axis('off')
     newpath = os.path.join("Sheets", names[0])
     if not os.path.exists(newpath):
         os.makedirs(newpath)
     #saves plot in folder
-    plt.savefig(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
-
-    im = Image.open(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
+    plt.savefig(os.path.join("Sheets", names[0], 'overheadheatmap.png'),bbox_inches='tight', pad_inches = 0)
+    #im = Image.open(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
     # Cropped image of above dimension
     # (It will not change original image)
-    im.crop((304, 59, 476, 426)).save(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
+    #im.crop((305, 59, 477, 426)).save(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
 
 
 
@@ -459,7 +480,7 @@ def damage_chart(damage_df):
     rect = patches.Rectangle((1.5, 1.5), 4, 6, linewidth=1, edgecolor='black', facecolor='none')
     ax.add_patch(rect)
     fig = plt.imshow(df, cmap = 'jet',vmin=60,vmax=100,  interpolation='bicubic')
-    cbar = plt.colorbar(fig)
+    #cbar = plt.colorbar(fig)
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
     #plt.title("Exit Velo Heat Map")
@@ -467,7 +488,8 @@ def damage_chart(damage_df):
     if not os.path.exists(newpath):
         os.makedirs(newpath)
     #saves plot in folder
-    plt.savefig(os.path.join("Sheets", names[0], 'heatmap.png'))
+    plt.axis('off')
+    plt.savefig(os.path.join("Sheets", names[0], 'heatmap.png'), bbox_inches='tight', pad_inches = 0)
 
 
 
@@ -504,8 +526,8 @@ def presentation (tabledata):
     title.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     # ---add table to slide---
-    x, y, cx, cy = Inches(0.15), Inches(0.85), Inches(10.7), Inches(1.5)
-    shape = slide.shapes.add_table(2, 7, x, y, cx, cy)
+    x, y, cx, cy = Inches(0.15), Inches(0.95), Inches(10.7), Inches(1)
+    shape = slide.shapes.add_table(2, 8, x, y, cx, cy)
     table = shape.table
 
     tbl =  shape._element.graphic.graphicData.tbl
@@ -562,10 +584,16 @@ def presentation (tabledata):
     cell06.text_frame.paragraphs[0].font.size = Pt(22)
     cell06.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
     
+    cell06 = table.cell(0,7)
+    cell06.vertical_anchor = MSO_ANCHOR.MIDDLE
+    cell06.text = "wRC"
+    cell06.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
+    cell06.text_frame.paragraphs[0].font.size = Pt(22)
+    cell06.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
 
     #nested for loop which puts vales from averages into table
-    for j in range(7):
+    for j in range(8):
         cell = table.cell((1),j)
         cell.text = tabledata[j]
         cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
@@ -575,14 +603,14 @@ def presentation (tabledata):
         
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
-    x, y, cx, cy = Inches(0.15), Inches(2.5), Inches(10.7), Inches(1)
+    x, y, cx, cy = Inches(0.15), Inches(2.15), Inches(10.7), Inches(1)
     shape2 = slide.shapes.add_table(2, 14, x, y, cx, cy)
     table2 = shape2.table
 
     tbl =  shape2._element.graphic.graphicData.tbl
     style_id = '{073A0DAA-6AF3-43AB-8588-CEC1D06C72B9}'
     tbl[0][-1].text = style_id
-    text = ['PA', 'AB', 'H', '2B', '3B', 'HR', 'RBI', 'BB', 'HBP', 'K', 'AVG', 'OBP','SLG', 'OPS']
+    text = ['PA', 'AB', 'H', '2B', '3B', 'HR', 'RBI*', 'BB', 'HBP', 'K', 'AVG', 'OBP','SLG', 'OPS']
     #creating labels for values in all tables
     for i in range(14):
         cell = table2.cell(0, i)
@@ -597,12 +625,34 @@ def presentation (tabledata):
         cell.text = tabledata[j+7]
         cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
         if j > 9:
-            cell.text_frame.paragraphs[0].font.size = Pt(18)
-        else:
             cell.text_frame.paragraphs[0].font.size = Pt(22)
+        else:
+            cell.text_frame.paragraphs[0].font.size = Pt(24)
         cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
         cell.vertical_anchor = MSO_ANCHOR.MIDDLE 
+
+    img_swing_chart = os.path.join(os.path.join("Sheets", names[0], 'swingchart.png'))
+    shape = slide.shapes.add_picture(img_swing_chart,Inches(0.30),Inches(3.8), width=Inches(3.6), height=Inches(3.85))
+    line = shape.line
+    line.color.rgb = RGBColor(117, 117, 117)
+    line.width = Inches(0.05)
     
+    prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
+
+    img_heat_map = os.path.join(os.path.join("Sheets", names[0], 'heatmap.png'))
+    shape = slide.shapes.add_picture(img_heat_map,Inches(4.35),Inches(3.8), width=Inches(3.07791), height=Inches(3.85))
+    line = shape.line
+    line.color.rgb = RGBColor(117, 117, 117)
+    line.width = Inches(0.05)
+
+    prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
+
+    img_heat_map_overhead = os.path.join(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
+    shape = slide.shapes.add_picture(img_heat_map_overhead,Inches(7.87791),Inches(3.8), width=Inches(1.80501), height=Inches(3.85))
+    line = shape.line
+    line.color.rgb = RGBColor(117, 117, 117)
+    line.width = Inches(0.05)
+
     prs.save(os.path.join("Sheets", names[0], names[0] + '.pptx'))
 
 def pitch_strike_called_df():
@@ -657,9 +707,9 @@ def pitch_loc_chart(player_df):
 
     return
 
-#swing2d_density_plot(csv_to_swing_df())
-#presentation(find_table_metrics())
-#damage_chart(data_frame_for_damage_chart())
-#damage_chart_overhead(data_frame_for_overhead_damage_chart())
+swing2d_density_plot(csv_to_swing_df())
+damage_chart(data_frame_for_damage_chart())
+damage_chart_overhead(data_frame_for_overhead_damage_chart())
+presentation(find_table_metrics())
 #pitch_loc_chart(pitch_strike_called_df())
 
