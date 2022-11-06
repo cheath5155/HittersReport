@@ -34,7 +34,7 @@ csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\C
 #damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
 #csv_dc_df = pd.read_csv(damage_chart_csv)
 csv_df = pd.read_csv(csv_file)
-names = ['Dernedde, Kyle']
+names = ['Reeder, Canon']
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -185,8 +185,8 @@ def find_table_metrics():
     hbp_df = player_df.drop(player_df[player_df.PitchCall != 'HitByPitch'].index)
     rbidf = pd.concat([inplay_df,walk_df,hbp_df])
 
-    print('RBI DF')
-    print(rbidf)
+    #print('RBI DF')
+    #print(rbidf)
     
     rbi = "%.0f" % round(rbidf["RunsScored"].sum(),0)
 
@@ -206,10 +206,9 @@ def find_table_metrics():
     ops = "%.3f" % (round((walks + hbps + hits)/plate_apearences,3) + round((hits + doubles + triples*2 + homers*3)/ABs,3))
 
     #WOBA
-    woba = (0.689*walks + 0.720*hbps + 0.844*(hits-doubles-triples-homers) + 1.261*doubles + 1.601*triples + 2.072*homers)/plate_apearences
+    woba = "%.3f" % (round((0.689*walks + 0.720*hbps + 0.844*(hits-doubles-triples-homers) + 1.261*doubles + 1.601*triples + 2.072*homers)/plate_apearences,3))
     league_woba = 0.351
-    wRC = (((woba-league_woba)/1.259)+(.114)*plate_apearences)
-    wRC = "%.0f" % round(wRC)
+
 
     data_to_pass_to_presentation = []
     data_to_pass_to_presentation.append(str(avg_ev))
@@ -219,7 +218,7 @@ def find_table_metrics():
     data_to_pass_to_presentation.append(str(k_rate) + "%")
     data_to_pass_to_presentation.append(str(bb_hbp_over_ks))
     data_to_pass_to_presentation.append(str(babip).lstrip('0'))
-    data_to_pass_to_presentation.append(str(wRC))
+    data_to_pass_to_presentation.append(str(woba).lstrip('0'))
     data_to_pass_to_presentation.append(str(plate_apearences))
     data_to_pass_to_presentation.append(str(ABs))
     data_to_pass_to_presentation.append(str(hits))
@@ -374,10 +373,10 @@ def damage_chart_overhead(damage_df):
 
     fig, ax = plt.subplots()
     fig = plt.imshow(df, cmap = 'jet',vmin=60,vmax=100, interpolation='bicubic')
-    plt.plot([1.61111, 5.611111], [11.5, 11.5], color='black', linestyle='-', linewidth=2)
-    plt.plot([1.61111, 1.61111], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
-    plt.plot([5.61111, 5.61111], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
-    plt.plot([5.61111, 3.61111], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
+    plt.plot([1.611, 5.389], [11.5, 11.5], color='black', linestyle='-', linewidth=2)
+    plt.plot([1.611, 1.611], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
+    plt.plot([5.389, 5.389], [11.5, 13.3888889], color='black', linestyle='-', linewidth=2)
+    plt.plot([5.389, 3.5], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
     plt.plot([1.61111, 3.61111], [13.3888889, 15.3888889], color='black', linestyle='-', linewidth=2)
     #cbar = plt.colorbar(fig)
     #plt.title("Exit Velo Heat Map")
@@ -567,7 +566,7 @@ def presentation (tabledata):
     cell04.vertical_anchor = MSO_ANCHOR.MIDDLE
     cell04.text = "Strikeout %"
     cell04.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
-    cell04.text_frame.paragraphs[0].font.size = Pt(22)
+    cell04.text_frame.paragraphs[0].font.size = Pt(20)
     cell04.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  
 
     cell05 = table.cell(0,5)
@@ -586,7 +585,7 @@ def presentation (tabledata):
     
     cell06 = table.cell(0,7)
     cell06.vertical_anchor = MSO_ANCHOR.MIDDLE
-    cell06.text = "wRC"
+    cell06.text = "wOBA"
     cell06.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
     cell06.text_frame.paragraphs[0].font.size = Pt(22)
     cell06.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
@@ -622,7 +621,7 @@ def presentation (tabledata):
     
     for j in range(14):
         cell = table2.cell((1),j)
-        cell.text = tabledata[j+7]
+        cell.text = tabledata[j+8]
         cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
         if j > 9:
             cell.text_frame.paragraphs[0].font.size = Pt(22)
