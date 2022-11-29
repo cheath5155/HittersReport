@@ -31,8 +31,6 @@ from pptx.dml.color import RGBColor
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
 csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\NOV2.csv"
-#damage_chart_csv = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\OCT22.csv"
-#csv_dc_df = pd.read_csv(damage_chart_csv)
 csv_df = pd.read_csv(csv_file)
 names = ['Reeder, Canon']
 
@@ -65,13 +63,14 @@ def csv_to_swing_df():
 
     return player_df
 
+# Currently Unused but can replace the swing df to make a whiff location chart
 def csv_to_whiff_df():
     global csv_df
     player_df = csv_df
 
     #Drops all rows where player isn't hitting
     player_df = player_df.drop(player_df[player_df.Batter != names[0]].index)
-    #Drops all rows where player didn't swing
+    #Drops all rows where player didn't whiff
     player_df = player_df.drop(player_df[player_df.PitchCall == 'BallCalled'].index)
     player_df = player_df.drop(player_df[player_df.PitchCall == 'StrikeCalled'].index)
     player_df = player_df.drop(player_df[player_df.PitchCall == 'BallinDirt'].index)
@@ -93,6 +92,7 @@ def csv_to_whiff_df():
 
     return player_df
 
+#Takes in a dataframe and creates a seaborn 2d density plot based on pitch location of dataframe
 def swing2d_density_plot(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
     rhhs = ['Burke, Isaiah','Cedillo, Ruben']
@@ -123,6 +123,7 @@ def swing2d_density_plot(player_df):
 
     return
 
+#Gets Metrics for both tables
 def find_table_metrics():
     global csv_df
     player_df = csv_df
@@ -145,7 +146,8 @@ def find_table_metrics():
     avg_ev_df = player_df.drop(player_df[player_df.ExitSpeed < 60.0].index)
     avg_ev = "%.1f" % round(avg_ev_df["ExitSpeed"].mean(),1)
     max_ev = "%.1f" % round(avg_ev_df["ExitSpeed"].max(),1)
-
+    
+    #Swing %
     swings = (player_df["PitchCall"] == "InPlay").sum() + (player_df["PitchCall"] == "FoulBall").sum() + (player_df["PitchCall"] == "StrikeSwinging").sum()
     takes = (player_df["PitchCall"] == "BallCalled").sum() + (player_df["PitchCall"] == "StrikeCalled").sum()
     swing_rate = "%.1f" % round(100*(swings/(swings+takes)),1)
@@ -179,23 +181,17 @@ def find_table_metrics():
     avg = "%.3f" % round(hits/ABs,3)
 
     #RBIs
-    #rbidf = rbidf.drop(rbidf[(rbidf.PitchCall != 'InPlay') | (rbidf.KorBB != 'Walk') | (rbidf.PitchCall != 'HitByPitch')].index)
     inplay_df = player_df.drop(player_df[player_df.PitchCall != 'InPlay'].index)
     walk_df = player_df.drop(player_df[player_df.KorBB != 'Walk'].index)
     hbp_df = player_df.drop(player_df[player_df.PitchCall != 'HitByPitch'].index)
     rbidf = pd.concat([inplay_df,walk_df,hbp_df])
-
-    #print('RBI DF')
-    #print(rbidf)
-    
     rbi = "%.0f" % round(rbidf["RunsScored"].sum(),0)
 
-    #Doubles, Triples, Home Runs, Walks
+    #Doubles, Triples, Home Runs
     doubles = (player_df["PlayResult"] == "Double").sum()
     triples = (player_df["PlayResult"] == "Triple").sum()
     homers = (player_df["PlayResult"] == "HomeRun").sum()
     
-
     #OBP
     obp = "%.3f" % round((walks + hbps + hits)/plate_apearences,3)
 
@@ -210,6 +206,7 @@ def find_table_metrics():
     league_woba = 0.351
 
 
+    #Compiles Data into one list to pass to the presentation fucntion
     data_to_pass_to_presentation = []
     data_to_pass_to_presentation.append(str(avg_ev))
     data_to_pass_to_presentation.append(str(max_ev))
@@ -238,43 +235,45 @@ def find_table_metrics():
     print(data_to_pass_to_presentation)
     return data_to_pass_to_presentation
 
+#Creates data Frame for EV Heat map Catcher View
 def data_frame_for_damage_chart():
     global csv_df
     damage_df = csv_df
+
+    #Drops rows without listed hitter
     damage_df = damage_df.drop(damage_df[damage_df.Batter != names[0]].index)
 
+    #Remove unnesassary columns
     remove_list = damage_df.columns.values.tolist()
     remove_list.remove("Batter")
     remove_list.remove("PlateLocHeight")
     remove_list.remove("PlateLocSide")
     remove_list.remove("BatterSide")
     remove_list.remove("ExitSpeed")
-
-    #Removes all collums other than those with .remove above from data frame
     damage_df = damage_df.drop(remove_list, axis=1)
 
-
+    #Removes Rows where EV is nan
     drop_index = []
     for index, row in damage_df.iterrows():
         if math.isnan(row['ExitSpeed']) == True:
             drop_index.append(index)
-
     damage_df = damage_df.drop(drop_index)
 
+    #Removes Rows where EV < 60
     damage_df = damage_df.drop(damage_df[damage_df.ExitSpeed < 60.0].index)
-
-    
 
     #Switches from Pitcher view to catcher view
     damage_df['PlateLocSide'] = (damage_df['PlateLocSide'] * -1)
 
     return damage_df
 
+#Creates data Frame for EV Heat map Overhead View
 def data_frame_for_overhead_damage_chart():
     global csv_df
     damage_df = csv_df
     damage_df = damage_df.drop(damage_df[damage_df.Batter != names[0]].index)
 
+    #Removes Unnessasry Collumns
     remove_list = damage_df.columns.values.tolist()
     remove_list.remove("Batter")
     #POS Z is essentally -platelocside(already in catchers view)
@@ -283,11 +282,9 @@ def data_frame_for_overhead_damage_chart():
     remove_list.remove("ContactPositionX")
     remove_list.remove("BatterSide")
     remove_list.remove("ExitSpeed")
-
-    #Removes all collums other than those with .remove above from data frame
     damage_df = damage_df.drop(remove_list, axis=1)
 
-
+    #Removes Rows where EV or Contact Position is nan
     drop_index = []
     for index, row in damage_df.iterrows():
         if math.isnan(row['ExitSpeed']) == True:
@@ -296,14 +293,14 @@ def data_frame_for_overhead_damage_chart():
             drop_index.append(index)
         if math.isnan(row['ContactPositionZ']) == True:
             drop_index.append(index)
-
-
     damage_df = damage_df.drop(drop_index)
 
+    #Removes Rows where EV is under 60
     damage_df = damage_df.drop(damage_df[damage_df.ExitSpeed < 60.0].index)
 
     return damage_df
 
+#Creates an overhead damage chart with matplotlib and saves the file in sheets
 def damage_chart_overhead(damage_df):
     print(damage_df)
     x = []
@@ -355,20 +352,7 @@ def damage_chart_overhead(damage_df):
     GD1 = interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='linear', fill_value=60.0)
 
     df = pd.DataFrame(GD1)
-    
 
-
-
-    #for a in range(6):
-    #    if math.isnan(df.iloc[0,a]):
-    #        if a > 0 and a < 6:
-    #            df.iloc[0,a] = (df.iloc[0,a-1]+df.iloc[0,a+1])
-
-
-
-
-    #df_smooth = gaussian_filter(df, sigma=1)
-    #sns.heatmap(df_smooth, cmap='Spectral_r')
     print(df)
 
     fig, ax = plt.subplots()
@@ -386,25 +370,6 @@ def damage_chart_overhead(damage_df):
         os.makedirs(newpath)
     #saves plot in folder
     plt.savefig(os.path.join("Sheets", names[0], 'overheadheatmap.png'),bbox_inches='tight', pad_inches = 0)
-    #im = Image.open(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
-    # Cropped image of above dimension
-    # (It will not change original image)
-    #im.crop((305, 59, 477, 426)).save(os.path.join("Sheets", names[0], 'overheadheatmap.png'))
-
-
-
-    
-
-    
-    #print(df_smooth)
-
-
-
-
-
-
-
-
 
     return
 
@@ -681,7 +646,6 @@ def pitch_strike_called_df():
 
 
     return player_df
-
 
 def pitch_loc_chart(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
