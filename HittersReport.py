@@ -8,8 +8,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from tkinter import filedialog
-import seaborn as sns
 import os
+
 from pptx import Presentation
 from pptx.util import Pt
 from pptx.util import Inches
@@ -23,6 +23,7 @@ from scipy import interpolate
 import matplotlib.patches as patches
 from PIL import Image
 from pptx.dml.color import RGBColor
+from tkinter import filedialog
 
 ##Create a report that takes in hitter data from a CSV file with muliple
 ##Trackman games and generated a PPTX and PDF containing charts and other 
@@ -30,7 +31,7 @@ from pptx.dml.color import RGBColor
 
 #Asks for CSV File
 #csv_file = filedialog.askopenfilename()
-csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\2022-23 OSU CSVs\\Combine CSVs\\NOV2.csv"
+csv_file = filedialog.askopenfilename()
 csv_df = pd.read_csv(csv_file)
 names = ['Reeder, Canon']
 
