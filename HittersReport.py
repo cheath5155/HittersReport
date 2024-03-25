@@ -31,13 +31,20 @@ import matplotlib.lines as lines
 ##Trackman games and generated a PPTX and PDF containing charts and other 
 ##Data from the hitter
 
+#Input the names and team 
+###########################################
+names = ['Crews, Dylan']
+team = 'LSU_TIG'
+###########################################
+
+#If you want to change background of Swing chart to a Lefty Hitter see Line 881 & 882
+
 #Asks for CSV File
 csv_file = filedialog.askopenfilename()
 count = 0
-#csv_file = "C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\Knights\\KnightsCSVs2023\\Verified\\Verfied620.csv"
 csv_df = pd.read_csv(csv_file)
-csv_df = csv_df[csv_df['BatterTeam'] == 'COR_KNI']
-names = ['Quinn, Tyler','Hedges, Ethan','Yukumoto, Ty','Hott, Ethan','Stem, Samuel','Shimao, Tate','Avila, Blake','Jones, Merit','Aroz, Anson','Le, Mason','Howard, Tyler','Call, Phoenix','Ng, JC']
+csv_df = csv_df[csv_df['BatterTeam'] == team]
+
 
 #Methods Job is to Clean Up the csv data frame to one only containg rows 
 #of player we want and collumns we need for the swing density chart
@@ -110,12 +117,11 @@ def csv_to_whiff_df():
 #Takes in a dataframe and creates a seaborn 2d density plot based on pitch location of dataframe
 def swing2d_density_plot(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
-    rhhs = ['Hedges, Ethan','Hott, Ethan','Howard, Tyler','Krieg, Jacob','Quinn, Tyler','Rowe, Cameron','Schoppe, Stanley','Segel, Kellen',
-         'Shimao, Tate','Stone, Jonathan','Thiele, Luke', 'Le, Mason','Call, Phoenix','Shimao, Tate']
-    if names[count] in rhhs:
-        img = plt.imread("RHH.png")
+    lhhs = ['Macias, Dallas','Talt, Easton','McDowell, Micah','Jones, Levi','Kasper, Brady','Bazzana, Travis']
+    if names[count] in lhhs:
+        img = plt.imread("LHH.png")
     else:
-        img = plt.imread('LHH.png')
+        img = plt.imread('RHH.png')
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
     #Creates density plot, camp is color scheme and alpha is transperacy
@@ -664,7 +670,7 @@ def damage_chart(damage_df):
     return
 
 def presentation (tabledata):
-    prs = Presentation("KnightsTemplate.pptx")
+    prs = Presentation("Template.pptx")
     prs.slide_width = Inches(11)
     prs.slide_height = Inches(8.5)
     #slide = prs.slides.add_slide(prs.slide_layouts[5])
@@ -677,7 +683,7 @@ def presentation (tabledata):
     title = slide.shapes.title
     title.text = full_name
     title.text_frame.paragraphs[0].font.size = Pt(32)
-    title.text_frame.paragraphs[0].font.name = 'Avenir Next LT Pro Light'
+    title.text_frame.paragraphs[0].font.name = 'Beaver Bold'
     title.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     # ---add table to slide---
@@ -766,15 +772,15 @@ def presentation (tabledata):
     prs.save(os.path.join("Sheets", names[count], names[count] + '.pptx'))
 
     x, y, cx, cy = Inches(0.15), Inches(2.15), Inches(10.7), Inches(1)
-    shape2 = slide.shapes.add_table(2, 15, x, y, cx, cy)
+    shape2 = slide.shapes.add_table(2, 14, x, y, cx, cy)
     table2 = shape2.table
 
     tbl =  shape2._element.graphic.graphicData.tbl
     style_id = '{073A0DAA-6AF3-43AB-8588-CEC1D06C72B9}'
     tbl[0][-1].text = style_id
-    text = ['PA', 'AB', 'H', '2B', '3B', 'HR', 'RBI','R', 'BB', 'HBP', 'K', 'AVG', 'OBP','SLG', 'OPS']
+    text = ['PA', 'AB', 'H', '2B', '3B', 'HR', 'RBI', 'BB', 'HBP', 'K', 'AVG', 'OBP','SLG', 'OPS']
     #creating labels for values in all tables
-    for i in range(15):
+    for i in range(14):
         cell = table2.cell(0, i)
         cell.text = text[i]
         cell.text_frame.paragraphs[0].font.size = Pt(22)
@@ -782,7 +788,7 @@ def presentation (tabledata):
         cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
         cell.vertical_anchor = MSO_ANCHOR.MIDDLE
     
-    for j in range(15):
+    for j in range(14):
         cell = table2.cell((1),j)
         cell.text = tabledata[j+9]
         cell.text_frame.paragraphs[0].font.name = 'Bahnschrift Condensed'
@@ -870,7 +876,9 @@ def pitch_strike_called_df():
 
 def pitch_loc_chart(player_df):
     #Pulls image for background will have to imput if statemnt to deptermine right vs left
-    rhhs = ['Burke, Isaiah','Cedillo, Ruben']
+    #rhhs = ['']
+
+    #Change to 'LHH.png' for LHH
     img = plt.imread("RHH.png")
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.set_style("white")
@@ -979,36 +987,11 @@ def get_player_stats(name, df):
 
     return filtered_df
 
-'''def main():
-    global count
-    global names
-    global csv_df
-    #names = csv_df.loc[csv_df['BatterTeam'] == 'ORE_BEA', 'Batter'].unique()
-    #names = names.tolist()
-    for i in range(len(names)):
-        name = names[count].split()
-        full_name = name[-1] + ' ' + name[0]
-        full_name = full_name[:-1]
-        player_df = get_player_df()
-        #all_results(player_df)
-        stats = get_player_stats(full_name,get_stats())
-        swing2d_density_plot(csv_to_swing_df())
-        damage_chart(data_frame_for_damage_chart())
-        damage_chart_overhead(data_frame_for_overhead_damage_chart())
-        pitchResult(player_df)
-        presentation(find_table_metrics_using_online(stats))
-    
-        
-        #PPTtoPDF(os.path.join("C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\HittersReports\\HittersReport\\Sheets", names[count], names[count] + '.pptx'),os.path.join("C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\HittersReports\\HittersReport\\Sheets\\PDF", names[count] + '.pdf'))
-        count = count + 1'''
-#pitch_loc_chart(pitch_strike_called_df())
 
 def main():
     global count
     global names
     global csv_df
-    #names = csv_df.loc[csv_df['BatterTeam'] == 'ORE_BEA', 'Batter'].unique()
-    #names = names.tolist()
     for i in range(len(names)):
         # Splitting the string into first name and last name
         last_name, first_name = names[i].split(', ')
@@ -1016,17 +999,13 @@ def main():
         first_initial = first_name[0]
         # Combining the first initial with the last name
         new_name = f"{last_name}, {first_initial}"
+        #Getting Data Frame with Just Player
         player_df = get_player_df()
-        #all_results(player_df)
-        stats = get_player_stats(new_name,get_stats())
         swing2d_density_plot(csv_to_swing_df())
         damage_chart(data_frame_for_damage_chart())
         damage_chart_overhead(data_frame_for_overhead_damage_chart())
         pitchResult(player_df)
-        presentation(find_table_metrics_using_online(stats))
-    
-        
-        #PPTtoPDF(os.path.join("C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\HittersReports\\HittersReport\\Sheets", names[count], names[count] + '.pptx'),os.path.join("C:\\Users\\cmhea\\OneDrive\\Documents\\baseball\\HittersReports\\HittersReport\\Sheets\\PDF", names[count] + '.pdf'))
+        presentation(find_table_metrics())
         count = count + 1
 
 main()
