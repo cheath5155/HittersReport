@@ -1,5 +1,7 @@
 # HittersReport
-The HittersReport creates a PowerPoint file containing visuals and statistics for hitters from a Trackman CSV file. The report contains the following:
+The HittersReport creates a PowerPoint file containing visuals and statistics for hitters from a Trackman CSV file. The report contains the following as shown directly below:
+
+![alt text](https://github.com/cheath5155/HittersReport/blob/main/Exampe.JPG)
 
 1) An advanced stats line containing batted ball information and advanced stats including average exit velocity (EV), max EV, chase rate, and more.
 2) A traditional stats line containing all traditional batting stats.
@@ -24,4 +26,4 @@ Sheets and visuals will show up in the sheets folder.
 ## Credits
 - Author: Connor Heath
 
-![alt text](https://github.com/cheath5155/HittersReport/blob/main/Exampe.JPG)
+
