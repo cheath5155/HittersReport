@@ -23,3 +23,5 @@ Sheets and visuals will show up in the sheets folder.
 
 ## Credits
 - Author: Connor Heath
+
+![alt text](https://github.com/cheath5155/HittersReport/blob/main/Exampe.JPG)
